@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Galaxy Diary</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{
+height:100vh;overflow:hidden;
+display:flex;justify-content:center;align-items:center;flex-direction:column;
+background:radial-gradient(circle at center,#60a5fa 0%,#2563eb 45%,#0f172a 100%);
+}
+.cloud{position:absolute;background:rgba(255,255,255,.25);filter:blur(25px);border-radius:999px}
+.cloud1{width:250px;height:80px;top:8%;left:5%}
+.cloud2{width:300px;height:90px;top:20%;right:5%}
+.cloud3{width:220px;height:70px;bottom:10%;left:10%}
+
+.galaxy{position:relative;width:700px;height:700px}
+.orbit{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+border-radius:50%;border:1px solid rgba(255,255,255,.2)}
+.o1{width:360px;height:360px}.o2{width:460px;height:460px}
+.o3{width:560px;height:560px}.o4{width:660px;height:660px}
+
+.center-photo{
+position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+width:220px;height:220px;border-radius:50%;overflow:hidden;
+border:5px solid #fff;
+box-shadow:0 0 20px #fff,0 0 50px #60a5fa,0 0 100px #2563eb;
+}
+.center-photo img{width:100%;height:100%;object-fit:cover}
+
+.memory-star{
+position:absolute;width:12px;height:12px;border-radius:50%;
+background:white;cursor:pointer;
+box-shadow:0 0 10px #fff,0 0 25px #60a5fa,0 0 50px #2563eb;
+animation:twinkle 2s infinite;
+}
+@keyframes twinkle{50%{transform:scale(1.5)}}
+
+.beam{
+position:absolute;width:8px;height:8px;border-radius:50%;
+background:white;top:50%;left:50%;
+box-shadow:0 0 20px white,0 0 40px #60a5fa;
+animation:shoot .8s linear forwards;
+}
+@keyframes shoot{
+from{transform:translate(-50%,-50%)}
+to{transform:translate(220px,-140px);opacity:0}
+}
+
+.input-box{
+position:fixed;bottom:20px;width:min(600px,90vw);
+display:flex;gap:10px;
+}
+textarea{flex:1;height:70px;padding:12px;border-radius:12px;border:none}
+button{padding:12px 20px;border:none;border-radius:12px;background:#2563eb;color:white;cursor:pointer}
+
+.popup{
+display:none;position:fixed;top:50%;left:50%;
+transform:translate(-50%,-50%);
+background:white;padding:20px;border-radius:16px;max-width:350px;
+}
+
+@media (max-width: 768px){
+.galaxy{
+width:min(95vw,520px);
+height:min(95vw,520px);
+}
+.center-photo{
+width:150px;
+height:150px;
+}
+.o1{width:240px;height:240px;}
+.o2{width:320px;height:320px;}
+.o3{width:400px;height:400px;}
+.o4{width:480px;height:480px;}
+
+.input-box{
+width:95vw;
+bottom:12px;
+flex-direction:column;
+}
+textarea{
+height:80px;
+}
+button{
+width:100%;
+}
+.popup{
+width:90vw;
+}
+}
+
+</style>
+</head>
+<body>
+
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+<div class="cloud cloud3"></div>
+
+<div class="galaxy" id="galaxy">
+<div class="orbit o1"></div>
+<div class="orbit o2"></div>
+<div class="orbit o3"></div>
+<div class="orbit o4"></div>
+
+<div class="center-photo">
+<img src="IMG-20251226-WA0226.jpg" alt="Foto">
+</div>
+</div>
+
+<div class="input-box">
+<textarea id="diaryInput" placeholder="Tulis diary..."></textarea>
+<button id="submitBtn">Kirim ✨</button>
+</div>
+
+<div class="popup" id="popup">
+<h3>Kenangan</h3>
+<p id="popupText"></p><br>
+<button onclick="document.getElementById('popup').style.display='none'">Tutup</button>
+</div>
+
+<script>
+const galaxy=document.getElementById('galaxy');
+const memories=[];
+
+document.getElementById('submitBtn').onclick=()=>{
+ const txt=document.getElementById('diaryInput').value.trim();
+ if(!txt) return;
+
+ const beam=document.createElement('div');
+ beam.className='beam';
+ galaxy.appendChild(beam);
+
+ setTimeout(()=>{
+  beam.remove();
+ saveDiary(text);
+createMemory(text);
+  document.getElementById('diaryInput').value='';
+ },800);
+};
+
+function createMemory(text){
+ const star=document.createElement('div');
+ star.className='memory-star';
+
+ const radii=[180,230,280,330];
+ memories.push({
+  element:star,
+  text:text,
+  radius:radii[Math.floor(Math.random()*radii.length)],
+  angle:Math.random()*360,
+  speed:0.05+Math.random()*0.3
+ });
+
+ star.onclick=()=>{
+   document.getElementById('popupText').innerText=text;
+   document.getElementById('popup').style.display='block';
+ };
+
+ galaxy.appendChild(star);
+}
+
+function animate(){
+ memories.forEach(m=>{
+  m.angle+=m.speed;
+  const r=m.angle*Math.PI/180;
+  m.element.style.left=(350+m.radius*Math.cos(r))+'px';
+  m.element.style.top=(350+m.radius*Math.sin(r))+'px';
+ });
+ requestAnimationFrame(animate);
+}
+animate();
+
+loadDiaries((data)=>{
+
+  Object.values(data).forEach(item=>{
+
+    createMemory(item.text);
+
+  });
+
+});
+
+
+</script>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  push,
+  onValue
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBFxKiJXE0ZV4PhQvPhqjlzcPPaFXpC3k0",
+  authDomain: "galaxy-diary-74f78.firebaseapp.com",
+  databaseURL: "https://galaxy-diary-74f78-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "galaxy-diary-74f78",
+  storageBucket: "galaxy-diary-74f78.firebasestorage.app",
+  messagingSenderId: "794452486067",
+  appId: "1:794452486067:web:9b6c549bb180eca2af8dc6",
+  measurementId: "G-TCC8T740VB"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.saveDiary = function(text){
+
+  push(
+    ref(db,"diaries"),
+    {
+      text:text,
+      createdAt:Date.now()
+    }
+  );
+
+};
+
+window.loadDiaries = function(callback){
+
+  onValue(
+    ref(db,"diaries"),
+    (snapshot)=>{
+
+      const data = snapshot.val();
+
+      if(!data) return;
+
+      callback(data);
+
+    }
+  );
+
+};
+
+</script>
+</body>
+</html>
