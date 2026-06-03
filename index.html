@@ -136,8 +136,8 @@ document.getElementById('submitBtn').onclick=()=>{
 
  setTimeout(()=>{
   beam.remove();
- saveDiary(text);
-createMemory(text);
+ saveDiary(txt);
+  createMemory(txt);
   document.getElementById('diaryInput').value='';
  },800);
 };
@@ -167,22 +167,15 @@ function animate(){
  memories.forEach(m=>{
   m.angle+=m.speed;
   const r=m.angle*Math.PI/180;
-  m.element.style.left=(350+m.radius*Math.cos(r))+'px';
-  m.element.style.top=(350+m.radius*Math.sin(r))+'px';
+  const centerX = galaxy.clientWidth / 2;
+  const centerY = galaxy.clientHeight / 2;
+  m.element.style.left=(centerX+m.radius*Math.cos(r))+'px';
+  m.element.style.top=(centerY+m.radius*Math.sin(r))+'px';
  });
  requestAnimationFrame(animate);
 }
 animate();
 
-loadDiaries((data)=>{
-
-  Object.values(data).forEach(item=>{
-
-    createMemory(item.text);
-
-  });
-
-});
 
 
 </script>
@@ -239,6 +232,18 @@ window.loadDiaries = function(callback){
   );
 
 };
+
+
+window.loadDiaries((data)=>{
+
+  document.querySelectorAll('.memory-star').forEach(el=>el.remove());
+  memories.length = 0;
+
+  Object.values(data).forEach(item=>{
+    createMemory(item.text);
+  });
+
+});
 
 </script>
 </body>
